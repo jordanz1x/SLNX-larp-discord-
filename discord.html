@@ -1,0 +1,3093 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Discord Style Workspace</title>
+  <style>
+    :root {
+      --bg-app: #36393f;
+      --bg-rail: #202225;
+      --bg-sidebar: #2f3136;
+      --bg-chat: #36393f;
+      --bg-right: #2f3136;
+      --bg-hover: #35373c;
+      --bg-active: #42464d;
+      --bg-card: #292b2f;
+      --bg-input: #40444b;
+      --bg-modal: #36393f;
+      --text-main: #dcddde;
+      --text-soft: #b9bbbe;
+      --text-muted: #72767d;
+      --brand: #5865f2;
+      --brand-soft: #7983f5;
+      --green: #3ba55d;
+      --danger: #ed4245;
+      --line: rgba(255, 255, 255, 0.04);
+      --header-shadow: 0 1px 0 rgba(4, 4, 5, 0.2), 0 1.5px 0 rgba(0, 0, 0, 0.05);
+      --overlay: rgba(0, 0, 0, 0.75);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text-main);
+      font-family: "gg sans", "Noto Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      background: var(--bg-app);
+    }
+
+    button,
+    input,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 72px 240px minmax(0, 1fr) 240px;
+      height: 100vh;
+      background: var(--bg-app);
+    }
+
+    .server-rail,
+    .sidebar,
+    .chat,
+    .members {
+      min-height: 0;
+    }
+
+    .server-rail {
+      position: relative;
+      background: var(--bg-rail);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 0;
+    }
+
+    .server-rail::after {
+      content: "";
+      width: 32px;
+      height: 2px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      margin-top: 2px;
+    }
+
+    .server-stack {
+      width: 100%;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding-bottom: 6px;
+    }
+
+    .server-button {
+      width: 48px;
+      height: 48px;
+      border: 0;
+      border-radius: 50%;
+      color: #fff;
+      background: #36393f;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 700;
+      transition: background 140ms ease, border-radius 140ms ease, transform 140ms ease;
+    }
+
+    .server-button:hover,
+    .server-button.active {
+      background: var(--brand);
+      border-radius: 16px;
+    }
+
+    .server-button.add {
+      color: #3ba55d;
+      background: #36393f;
+      font-size: 28px;
+      line-height: 1;
+    }
+
+    .server-button.add:hover {
+      background: #3ba55d;
+      color: white;
+    }
+
+    .sidebar {
+      background: var(--bg-sidebar);
+      display: grid;
+      grid-template-rows: 48px 1fr auto 52px;
+      border-right: 1px solid rgba(0, 0, 0, 0.12);
+      animation: panelSlideIn 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .topbar,
+    .chatbar,
+    .membersbar {
+      height: 48px;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--line);
+      box-shadow: var(--header-shadow);
+      z-index: 2;
+    }
+
+    .topbar {
+      justify-content: space-between;
+      gap: 10px;
+      background: var(--bg-sidebar);
+    }
+
+    .topbar-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #fff;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .server-title-button {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      padding: 0;
+      cursor: pointer;
+    }
+
+    .server-title-button:hover .topbar-title,
+    .server-title-button:hover .server-title-caret {
+      color: #ffffff;
+    }
+
+    .server-title-caret {
+      color: var(--text-muted);
+      font-size: 14px;
+      flex: none;
+    }
+
+    .mini-actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      color: var(--text-muted);
+    }
+
+    .icon-button {
+      width: 24px;
+      height: 24px;
+      border: 0;
+      border-radius: 4px;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+      padding: 0;
+    }
+
+    .icon-button:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .action-button {
+      border: 0;
+      border-radius: 3px;
+      padding: 8px 12px;
+      background: var(--bg-card);
+      color: white;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .action-button.primary {
+      background: var(--brand);
+    }
+
+    .action-button.secondary {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-soft);
+    }
+
+    .action-button.danger {
+      background: var(--danger);
+    }
+
+    .action-button:hover {
+      filter: brightness(1.06);
+    }
+
+    .action-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      filter: none;
+    }
+
+    .channel-list {
+      overflow: auto;
+      padding: 8px;
+    }
+
+    .channel-group {
+      margin-bottom: 14px;
+    }
+
+    .channel-group-title {
+      padding: 0 8px 6px;
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    .channel-button {
+      width: 100%;
+      border: 0;
+      border-radius: 4px;
+      background: transparent;
+      color: var(--text-soft);
+      padding: 6px 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-align: left;
+      cursor: pointer;
+      margin-bottom: 2px;
+      font-size: 16px;
+      font-weight: 500;
+      transition: background 160ms ease, color 160ms ease, transform 160ms ease;
+    }
+
+    .channel-button:hover {
+      background: var(--bg-hover);
+      color: var(--text-main);
+      transform: translateX(2px);
+    }
+
+    .channel-button.active {
+      background: var(--bg-active);
+      color: white;
+    }
+
+    .channel-button span:first-child {
+      color: var(--text-muted);
+      font-size: 20px;
+      line-height: 1;
+      width: 18px;
+      text-align: center;
+      flex: none;
+    }
+
+    .channel-button.voice {
+      justify-content: space-between;
+    }
+
+    .channel-main {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .channel-occupancy {
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 700;
+      flex: none;
+    }
+
+    .voice-panel {
+      display: none;
+      padding: 10px 12px;
+      background: #2a2d31;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .voice-panel.active {
+      display: block;
+    }
+
+    .voice-panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 6px;
+    }
+
+    .voice-panel-title {
+      color: #3ba55d;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .voice-panel-subtitle {
+      color: var(--text-soft);
+      font-size: 12px;
+    }
+
+    .voice-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .voice-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 8px;
+      border-radius: 999px;
+      background: rgba(59, 165, 93, 0.12);
+      color: #adf0c7;
+      font-size: 11px;
+      font-weight: 700;
+      margin-top: 4px;
+    }
+
+    .user-panel {
+      background: #292b2f;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 8px;
+      cursor: pointer;
+      transition: background 180ms ease, transform 180ms ease;
+    }
+
+    .user-panel:hover {
+      background: #32353b;
+      transform: translateY(-1px);
+    }
+
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #5865f2, #8ea1e1);
+      color: white;
+      font-weight: 700;
+      overflow: hidden;
+      flex: none;
+      position: relative;
+    }
+
+    .avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .avatar::after {
+      content: "";
+      position: absolute;
+      right: -1px;
+      bottom: -1px;
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: var(--green);
+      border: 3px solid #292b2f;
+    }
+
+    .identity {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .identity strong,
+    .identity span {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .identity strong {
+      color: #fff;
+      font-size: 14px;
+      line-height: 1.2;
+    }
+
+    .identity span {
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    .chat {
+      background: var(--bg-chat);
+      display: grid;
+      grid-template-rows: 48px 1fr auto;
+    }
+
+    .chatbar {
+      justify-content: space-between;
+      gap: 16px;
+      background: var(--bg-chat);
+    }
+
+    .chat-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .chat-title > span:first-child {
+      color: var(--text-muted);
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .chat-topic {
+      margin-left: 4px;
+      padding-left: 12px;
+      border-left: 1px solid var(--line);
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 500;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .messages {
+      overflow: auto;
+      padding: 16px 16px 0;
+    }
+
+    .welcome {
+      padding: 8px 0 24px;
+      margin-bottom: 8px;
+    }
+
+    .welcome-badge {
+      width: 68px;
+      height: 68px;
+      margin-bottom: 16px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, var(--brand), var(--brand-soft));
+      color: white;
+      font-size: 32px;
+      font-weight: 800;
+    }
+
+    .welcome h1 {
+      margin: 0 0 8px;
+      color: white;
+      font-size: 30px;
+      line-height: 1.1;
+    }
+
+    .welcome p {
+      margin: 0;
+      max-width: 720px;
+      color: var(--text-soft);
+      line-height: 1.45;
+    }
+
+    .message {
+      display: grid;
+      grid-template-columns: 40px 1fr;
+      gap: 16px;
+      padding: 2px 0 16px;
+      position: relative;
+      animation: messageRise 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .message:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .message-actions {
+      position: absolute;
+      top: -10px;
+      right: 12px;
+      display: none;
+      align-items: center;
+      gap: 6px;
+      padding: 4px;
+      border-radius: 8px;
+      background: #2f3136;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+    }
+
+    .message:hover .message-actions {
+      display: flex;
+    }
+
+    .message-action {
+      width: 28px;
+      height: 28px;
+      border: 0;
+      border-radius: 4px;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 15px;
+      line-height: 1;
+    }
+
+    .message-action:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: white;
+    }
+
+    .message-action.delete:hover {
+      color: #ff8e8e;
+    }
+
+    .message-header {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      margin-bottom: 4px;
+      flex-wrap: wrap;
+    }
+
+    .message-author {
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .message-author:hover {
+      text-decoration: underline;
+    }
+
+    .message-time {
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    .message-content {
+      color: var(--text-main);
+      line-height: 1.45;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .message-gif {
+      margin-top: 10px;
+      max-width: min(420px, 100%);
+      border-radius: 8px;
+      display: block;
+      animation: mediaFade 240ms ease;
+    }
+
+    .composer-wrap {
+      padding: 0 16px 24px;
+      position: relative;
+    }
+
+    .composer {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 44px;
+      background: #383a40;
+      border-radius: 8px;
+      padding: 0 12px;
+      transition: box-shadow 180ms ease, transform 180ms ease;
+    }
+
+    .composer:focus-within {
+      box-shadow: 0 0 0 1px rgba(88, 101, 242, 0.55), 0 10px 24px rgba(0, 0, 0, 0.18);
+      transform: translateY(-1px);
+    }
+
+    .composer-tools {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex: none;
+    }
+
+    .composer-tool {
+      width: 32px;
+      height: 32px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: #b5bac1;
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+      padding: 0;
+    }
+
+    .composer-tool:hover {
+      background: rgba(255, 255, 255, 0.06);
+      color: white;
+    }
+
+    .composer textarea {
+      flex: 1;
+      border: 0;
+      outline: none;
+      background: transparent;
+      color: var(--text-main);
+      resize: none;
+      max-height: 180px;
+      min-height: 22px;
+      padding: 11px 0;
+      font-size: 16px;
+      line-height: 1.35;
+    }
+
+    .composer textarea::placeholder {
+      color: #949ba4;
+    }
+
+    .composer-send {
+      display: none;
+    }
+
+    .composer-trailing {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex: none;
+    }
+
+    .composer-trailing .composer-tool {
+      width: 28px;
+      height: 28px;
+      font-size: 16px;
+      color: #c7ccd1;
+    }
+
+    .picker {
+      position: absolute;
+      left: 16px;
+      bottom: 82px;
+      width: min(360px, calc(100vw - 32px));
+      display: none;
+      background: #2f3136;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+      overflow: hidden;
+      z-index: 30;
+    }
+
+    .picker.open {
+      display: block;
+    }
+
+    .picker-header {
+      padding: 12px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      color: white;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .emoji-grid,
+    .gif-grid {
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .emoji-grid {
+      grid-template-columns: repeat(6, 1fr);
+    }
+
+    .gif-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .emoji-option,
+    .gif-option {
+      border: 0;
+      border-radius: 8px;
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .emoji-option {
+      min-height: 44px;
+      font-size: 24px;
+    }
+
+    .emoji-option:hover,
+    .gif-option:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .gif-option {
+      padding: 8px;
+      text-align: left;
+      color: var(--text-main);
+    }
+
+    .gif-option img {
+      width: 100%;
+      height: 96px;
+      object-fit: cover;
+      border-radius: 6px;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .gif-option span {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .members {
+      background: var(--bg-right);
+      border-left: 1px solid rgba(0, 0, 0, 0.12);
+      display: grid;
+      grid-template-rows: 48px 1fr;
+    }
+
+    .membersbar {
+      color: var(--text-soft);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .members-list {
+      overflow: auto;
+      padding: 16px 8px;
+    }
+
+    .member-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 8px;
+      border-radius: 4px;
+      color: var(--text-soft);
+      cursor: pointer;
+      transition: background 160ms ease, transform 160ms ease;
+    }
+
+    .member-row:hover {
+      background: rgba(255, 255, 255, 0.04);
+      transform: translateX(2px);
+    }
+
+    .member-meta {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+    }
+
+    .member-name {
+      color: var(--text-main);
+      font-size: 14px;
+      line-height: 1.2;
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      line-height: 1;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .pill.badge {
+      background: rgba(88, 101, 242, 0.18);
+      color: #cbd0ff;
+      border: 1px solid rgba(88, 101, 242, 0.3);
+    }
+
+    .pill.role {
+      background: rgba(35, 165, 90, 0.16);
+      color: #adf0c7;
+      border: 1px solid rgba(35, 165, 90, 0.28);
+    }
+
+    .pill.banned {
+      background: rgba(237, 66, 69, 0.16);
+      color: #ffb3b5;
+      border: 1px solid rgba(237, 66, 69, 0.32);
+    }
+
+    .member-sheet.modal {
+      width: min(308px, calc(100vw - 20px));
+      max-height: calc(100vh - 20px);
+      padding: 0;
+      overflow-y: auto;
+      background: #1f1a1d;
+    }
+
+    .profile-sheet {
+      background:
+        radial-gradient(circle at 88% 18%, rgba(77, 156, 255, 0.9), transparent 10%),
+        linear-gradient(180deg, #180709 0%, #120609 18%, #161114 42%, #1d1a1e 100%);
+      overflow: visible;
+      max-height: none;
+    }
+
+    .sheet-banner {
+      height: 84px;
+      background:
+        radial-gradient(circle at 84% 28%, rgba(67, 156, 255, 0.9), transparent 12%),
+        linear-gradient(180deg, #12070a 0%, #1d0d13 100%);
+      position: relative;
+    }
+
+    .sheet-bubble {
+      position: absolute;
+      top: 10px;
+      left: 12px;
+      max-width: 148px;
+      padding: 8px 12px;
+      border-radius: 18px;
+      background: rgba(35, 37, 43, 0.92);
+      color: #dfe1e5;
+      font-size: 13px;
+      line-height: 1.2;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
+    }
+
+    .sheet-head {
+      position: relative;
+      padding: 0 14px 14px;
+      margin-top: -22px;
+    }
+
+    .sheet-avatar-wrap {
+      position: relative;
+      width: 76px;
+      height: 76px;
+      margin-bottom: 8px;
+    }
+
+    .sheet-avatar-wrap .avatar {
+      width: 76px;
+      height: 76px;
+      border: 6px solid #14090c;
+      font-size: 24px;
+      background: #0e0f12;
+    }
+
+    .sheet-avatar-wrap .avatar::after {
+      width: 18px;
+      height: 18px;
+      border: 4px solid #14090c;
+      right: 2px;
+      bottom: 2px;
+      background: #f23f43;
+    }
+
+    .sheet-title {
+      color: #fff;
+      font-size: 28px;
+      font-weight: 800;
+      line-height: 0.95;
+      margin: 0 0 6px;
+      text-transform: lowercase;
+    }
+
+    .sheet-handle {
+      color: #eef0f3;
+      font-size: 15px;
+      line-height: 1.2;
+      margin-bottom: 10px;
+    }
+
+    .sheet-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .sheet-badge-icon {
+      width: 18px;
+      height: 18px;
+      display: inline-grid;
+      place-items: center;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+      font-size: 12px;
+    }
+
+    .sheet-bio {
+      color: #f1f1f3;
+      font-size: 13px;
+      line-height: 1.35;
+      margin-bottom: 12px;
+    }
+
+    .sheet-card {
+      background: #241f22;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: 12px;
+      margin: 0 0 12px;
+      overflow: hidden;
+    }
+
+    .sheet-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 10px 8px;
+      color: #f0f1f3;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .sheet-card-body {
+      padding: 0 10px 10px;
+    }
+
+    .game-icons {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .game-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #3f434a, #6e7783);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .live-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: #f23f43;
+      color: white;
+      font-size: 11px;
+      font-weight: 800;
+      margin-left: 8px;
+    }
+
+    .stream-preview {
+      border-radius: 10px;
+      overflow: hidden;
+      background: #16171b;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .stream-screen {
+      height: 118px;
+      background:
+        linear-gradient(90deg, rgba(128, 93, 170, 0.16) 0 18%, transparent 18% 100%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 28%),
+        #0f1014;
+      position: relative;
+    }
+
+    .stream-screen::before {
+      content: "";
+      position: absolute;
+      inset: 16px 18px 18px 96px;
+      background:
+        repeating-linear-gradient(180deg, rgba(255,255,255,0.08) 0 2px, transparent 2px 14px),
+        repeating-linear-gradient(90deg, rgba(86,97,255,0.14) 0 1px, transparent 1px 38px);
+      opacity: 0.75;
+      border-radius: 6px;
+    }
+
+    .stream-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 10px;
+      color: #d8dbe0;
+      font-size: 12px;
+    }
+
+    .stream-meta {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .sheet-action-card {
+      background: #241f22;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: 12px;
+      margin-bottom: 14px;
+      overflow: hidden;
+    }
+
+    .sheet-action-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 14px;
+      color: #e9eaee;
+      font-size: 15px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      cursor: pointer;
+    }
+
+    .sheet-action-row:first-child {
+      border-top: 0;
+    }
+
+    .sheet-action-row:hover {
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .sheet-action-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sheet-form {
+      display: none;
+      padding: 0 12px 12px;
+    }
+
+    .sheet-form.open {
+      display: block;
+    }
+
+    .sheet-form-title {
+      margin: 2px 0 10px;
+      color: #f0f1f3;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .sheet-action-row.active {
+      background: rgba(88, 101, 242, 0.18);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      margin-left: auto;
+      flex: none;
+    }
+
+    .status-dot.online {
+      background: #3ba55d;
+    }
+
+    .status-dot.idle {
+      background: #faa81a;
+    }
+
+    .status-dot.dnd {
+      background: #ed4245;
+    }
+
+    .status-dot.invisible {
+      background: #747f8d;
+    }
+
+    .empty-state,
+    .status-line {
+      color: var(--text-soft);
+      padding: 12px 0;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: var(--overlay);
+      display: none;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 10px;
+      z-index: 50;
+      overflow-y: auto;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+      animation: backdropFade 180ms ease;
+    }
+
+    .modal {
+      width: min(460px, 100%);
+      background: var(--bg-modal);
+      border-radius: 8px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+      padding: 24px;
+      animation: modalPop 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .modal h2 {
+      margin: 0 0 8px;
+      color: white;
+      font-size: 24px;
+    }
+
+    .modal p {
+      margin: 0 0 18px;
+      color: var(--text-soft);
+      line-height: 1.45;
+    }
+
+    .field {
+      margin-bottom: 10px;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--text-soft);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .field input,
+    .field select {
+      width: 100%;
+      border: 0;
+      outline: none;
+      border-radius: 3px;
+      background: #202225;
+      color: white;
+      padding: 8px 10px;
+      font-size: 13px;
+    }
+
+    .field input[type="file"] {
+      padding: 6px 8px;
+      font-size: 12px;
+    }
+
+    .field input:focus,
+    .field select:focus {
+      box-shadow: 0 0 0 1px var(--brand);
+    }
+
+    .field small {
+      display: block;
+      margin-top: 4px;
+      color: var(--text-muted);
+      font-size: 11px;
+      line-height: 1.4;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .error {
+      min-height: 18px;
+      color: #ff8e8e;
+      font-size: 13px;
+    }
+
+    .server-menu {
+      position: fixed;
+      left: 84px;
+      bottom: 18px;
+      width: 250px;
+      display: none;
+      padding: 8px;
+      background: #18191c;
+      border-radius: 8px;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+      z-index: 60;
+    }
+
+    .server-menu.open {
+      display: block;
+      animation: menuPop 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .server-menu button {
+      width: 100%;
+      border: 0;
+      border-radius: 4px;
+      background: transparent;
+      color: var(--text-main);
+      text-align: left;
+      padding: 10px 12px;
+      cursor: pointer;
+    }
+
+    .server-menu button:hover {
+      background: var(--brand);
+      color: white;
+    }
+
+    .server-menu strong,
+    .server-menu span {
+      display: block;
+    }
+
+    .server-menu span {
+      margin-top: 4px;
+      color: inherit;
+      opacity: 0.85;
+      font-size: 13px;
+    }
+
+    .server-header-menu {
+      position: absolute;
+      top: 52px;
+      left: 12px;
+      right: 12px;
+      display: none;
+      padding: 8px;
+      background: #18191c;
+      border-radius: 8px;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+      z-index: 40;
+    }
+
+    .server-header-menu.open {
+      display: block;
+      animation: menuPop 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .server-header-item {
+      width: 100%;
+      border: 0;
+      border-radius: 4px;
+      background: transparent;
+      color: var(--text-main);
+      text-align: left;
+      padding: 10px 12px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .server-header-item:hover {
+      background: var(--brand);
+      color: white;
+    }
+
+    @media (max-width: 1100px) {
+      .app {
+        grid-template-columns: 72px 240px minmax(0, 1fr);
+      }
+
+      .members {
+        display: none;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .app {
+        grid-template-columns: 72px minmax(0, 1fr);
+      }
+
+      .sidebar {
+        display: none;
+      }
+    }
+
+    @keyframes panelSlideIn {
+      from {
+        opacity: 0;
+        transform: translateX(-8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes messageRise {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes mediaFade {
+      from {
+        opacity: 0;
+        transform: scale(0.985);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @keyframes backdropFade {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes modalPop {
+      from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.985);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes menuPop {
+      from {
+        opacity: 0;
+        transform: translateY(-6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="server-rail">
+      <button class="server-button active" type="button" title="Discord Home">D</button>
+      <div class="server-stack" id="serverStack"></div>
+      <button class="server-button add" id="openCreateServer" title="Create or add server">+</button>
+    </aside>
+
+    <aside class="sidebar">
+      <div class="topbar">
+        <button type="button" class="server-title-button" id="serverTitleButton">
+          <div class="topbar-title" id="serverName">Loading...</div>
+          <span class="server-title-caret">▾</span>
+        </button>
+        <div class="mini-actions">
+          <button class="icon-button" id="addChannelButton" title="Add channel">+</button>
+          <span>▾</span>
+        </div>
+        <div class="server-header-menu" id="serverHeaderMenu">
+          <button type="button" class="server-header-item" id="invitePeopleButton">Invite People</button>
+          <button type="button" class="server-header-item" id="copyInviteCodeHeaderButton">Copy Invite Code</button>
+        </div>
+      </div>
+      <div class="channel-list" id="channelList"></div>
+      <div class="voice-panel" id="voicePanel">
+        <div class="voice-panel-head">
+          <div>
+            <div class="voice-panel-title">VOICE CONNECTED</div>
+            <div class="voice-panel-subtitle" id="voicePanelChannel">Not connected</div>
+          </div>
+          <button type="button" class="action-button danger" id="leaveVoiceButton">Leave</button>
+        </div>
+        <div class="voice-chip" id="voicePanelMembers">1 member</div>
+      </div>
+      <div class="user-panel">
+        <div class="avatar">YU</div>
+        <div class="identity">
+          <strong>You</strong>
+          <span>Local session</span>
+        </div>
+      </div>
+    </aside>
+
+    <main class="chat">
+      <div class="chatbar">
+        <div class="chat-title">
+          <span>#</span>
+          <span id="channelName">Select a channel</span>
+          <span class="chat-topic" id="channelTopic">Create or join a server to get started.</span>
+        </div>
+        <div class="mini-actions" aria-hidden="true">
+          <span>📌</span>
+          <span>👥</span>
+          <span>🔍</span>
+          <span>☰</span>
+        </div>
+      </div>
+      <section class="messages" id="messages"></section>
+      <div class="composer-wrap">
+        <div class="picker" id="emojiPicker">
+          <div class="picker-header">Emoji</div>
+          <div class="emoji-grid" id="emojiGrid"></div>
+        </div>
+        <div class="picker" id="gifPicker">
+          <div class="picker-header">GIFs</div>
+          <div class="gif-grid" id="gifGrid"></div>
+        </div>
+        <form class="composer" id="composer">
+          <div class="composer-tools">
+            <button type="button" class="composer-tool" id="attachButton" title="Add attachment">＋</button>
+          </div>
+          <textarea id="messageInput" rows="1" placeholder="Message a channel"></textarea>
+          <div class="composer-trailing">
+            <button type="button" class="composer-tool" id="giftButton" title="Gift">🎁</button>
+            <button type="button" class="composer-tool" id="gifButton" title="GIF">GIF</button>
+            <button type="button" class="composer-tool" id="stickerButton" title="Sticker">🗂</button>
+            <button type="button" class="composer-tool" id="emojiButton" title="Emoji">☺</button>
+            <button type="button" class="composer-tool" id="appsButton" title="Apps">✦</button>
+          </div>
+          <button type="submit" class="composer-send">Send</button>
+        </form>
+      </div>
+    </main>
+
+    <aside class="members">
+      <div class="membersbar">Members</div>
+      <div class="members-list" id="membersList"></div>
+    </aside>
+  </div>
+
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal">
+      <h2 id="modalTitle">Create Server</h2>
+      <p id="modalDescription">Spin up a new local server with starter channels.</p>
+      <form id="modalForm">
+        <div class="field">
+          <label for="serverInput">Server Name</label>
+          <input id="serverInput" maxlength="40" placeholder="Night Crew">
+        </div>
+        <div class="field" id="serverCodeField" style="display:none;">
+          <label for="serverCodeInput">Invite Code</label>
+          <input id="serverCodeInput" placeholder="Paste a shared code">
+        </div>
+        <div class="error" id="modalError"></div>
+        <div class="modal-actions">
+          <button type="button" class="action-button secondary" id="cancelModal">Cancel</button>
+          <button type="submit" class="action-button primary" id="confirmModal">Create</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="server-menu" id="serverMenu">
+    <button type="button" id="menuCreateServer">
+      <strong>Create Server</strong>
+      <span>Start a fresh local server with starter channels.</span>
+    </button>
+    <button type="button" id="menuAddServer">
+      <strong>Add Server</strong>
+      <span>Use an invite code to add a shared local server.</span>
+    </button>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "discord_style_workspace_v2";
+
+    const defaultData = {
+      activeServerId: "server_home",
+      activeChannelId: "channel_general",
+      servers: [
+        {
+          id: "server_home",
+          name: "Home Base",
+          inviteCode: "HOMEBASE",
+          members: ["You", "Pixel", "Nova", "Echo"],
+          channels: [
+            {
+              id: "channel_general",
+              name: "general",
+              type: "text",
+              topic: "General updates, ideas, and conversation.",
+              messages: [
+                {
+                  id: "message_welcome",
+                  author: "System",
+                  content: "Welcome to Home Base. Create more servers from the plus button on the left.",
+                  createdAt: Date.now() - 1000 * 60 * 60,
+                },
+                {
+                  id: "message_hello",
+                  author: "Nova",
+                  content: "This app now works without a bot and keeps your local servers in browser storage.",
+                  createdAt: Date.now() - 1000 * 60 * 24,
+                }
+              ]
+            },
+            {
+              id: "channel_projects",
+              name: "projects",
+              type: "text",
+              topic: "Keep track of builds and ideas.",
+              messages: []
+            },
+            {
+              id: "channel_voice_lounge",
+              name: "Lounge",
+              type: "voice",
+              members: ["Pixel", "Echo"]
+            }
+          ]
+        }
+      ],
+      profile: {
+        displayName: "You",
+        status: "Local session",
+        presence: "online",
+        avatar: "YU",
+        avatarImage: ""
+      },
+      voiceState: {
+        serverId: null,
+        channelId: null
+      },
+      memberProfiles: {
+        "You": {
+          badges: ["Founder"],
+          roles: ["Admin"],
+          status: "Local session",
+          presence: "online",
+          avatar: "YU",
+          avatarImage: "",
+          screenSharing: false,
+          banned: false
+        },
+        "Pixel": {
+          badges: ["Early Supporter"],
+          roles: ["Designer"],
+          status: "Reviewing mockups",
+          presence: "idle",
+          avatar: "PI",
+          avatarImage: "",
+          screenSharing: false,
+          banned: false
+        },
+        "Nova": {
+          badges: ["Bug Hunter"],
+          roles: ["Developer"],
+          status: "Shipping fixes",
+          presence: "dnd",
+          avatar: "NO",
+          avatarImage: "",
+          screenSharing: false,
+          banned: false
+        },
+        "Echo": {
+          badges: [],
+          roles: ["Moderator"],
+          status: "Listening in",
+          presence: "online",
+          avatar: "EC",
+          avatarImage: "",
+          screenSharing: false,
+          banned: false
+        }
+      }
+    };
+
+    const state = loadState();
+
+    const serverStack = document.getElementById("serverStack");
+    const serverName = document.getElementById("serverName");
+    const serverTitleButton = document.getElementById("serverTitleButton");
+    const serverHeaderMenu = document.getElementById("serverHeaderMenu");
+    const channelList = document.getElementById("channelList");
+    const channelName = document.getElementById("channelName");
+    const channelTopic = document.getElementById("channelTopic");
+    const messages = document.getElementById("messages");
+    const membersList = document.getElementById("membersList");
+    const composer = document.getElementById("composer");
+    const messageInput = document.getElementById("messageInput");
+    const voicePanel = document.getElementById("voicePanel");
+    const voicePanelChannel = document.getElementById("voicePanelChannel");
+    const voicePanelMembers = document.getElementById("voicePanelMembers");
+    const leaveVoiceButton = document.getElementById("leaveVoiceButton");
+    const emojiPicker = document.getElementById("emojiPicker");
+    const gifPicker = document.getElementById("gifPicker");
+    const emojiGrid = document.getElementById("emojiGrid");
+    const gifGrid = document.getElementById("gifGrid");
+    const modalBackdrop = document.getElementById("modalBackdrop");
+    const modalTitle = document.getElementById("modalTitle");
+    const modalDescription = document.getElementById("modalDescription");
+    const modalForm = document.getElementById("modalForm");
+    const serverInput = document.getElementById("serverInput");
+    const serverCodeInput = document.getElementById("serverCodeInput");
+    const serverCodeField = document.getElementById("serverCodeField");
+    const modalError = document.getElementById("modalError");
+    const confirmModal = document.getElementById("confirmModal");
+    const serverMenu = document.getElementById("serverMenu");
+    const userPanel = document.querySelector(".user-panel");
+
+    let profileModal;
+    let memberModal;
+    let selectedMemberName = null;
+
+    let modalMode = "create";
+
+    const EMOJIS = ["😀", "😂", "🔥", "💯", "🎉", "😎", "😭", "❤️", "👍", "👀", "🚀", "✨"];
+    const GIFS = [
+      { label: "Happy", url: "https://media.giphy.com/media/111ebonMs90YLu/giphy.gif" },
+      { label: "Typing", url: "https://media.giphy.com/media/l0HlBO7eyXzSZkJri/giphy.gif" },
+      { label: "Hype", url: "https://media.giphy.com/media/26ufdipQqU2lhNA4g/giphy.gif" },
+      { label: "Nice", url: "https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif" }
+    ];
+
+    function loadState() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+
+      if (!raw) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultData));
+        return structuredClone(defaultData);
+      }
+
+      try {
+        const parsed = JSON.parse(raw);
+        if (!parsed.servers || !parsed.servers.length) {
+          throw new Error("Invalid state");
+        }
+        parsed.profile = parsed.profile || {
+          displayName: "You",
+          status: "Local session",
+          presence: "online",
+          avatar: "YU",
+          avatarImage: ""
+        };
+        parsed.profile.avatarImage = parsed.profile.avatarImage || "";
+        parsed.profile.presence = parsed.profile.presence || "online";
+        parsed.voiceState = parsed.voiceState || {
+          serverId: null,
+          channelId: null
+        };
+        parsed.memberProfiles = parsed.memberProfiles || {};
+        Object.values(parsed.memberProfiles).forEach((profile) => {
+          profile.screenSharing = Boolean(profile.screenSharing);
+          profile.presence = profile.presence || "online";
+        });
+        return parsed;
+      } catch {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultData));
+        return structuredClone(defaultData);
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function makeId(prefix) {
+      return `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    function initials(value) {
+      return String(value || "?").trim().slice(0, 2).toUpperCase();
+    }
+
+    function avatarMarkup(record) {
+      const image = record?.avatarImage || "";
+      const fallback = initials(record?.avatar || record?.name || "?");
+      return image
+        ? `<img src="${escapeHtml(image)}" alt="${escapeHtml(record?.name || "Avatar")}">`
+        : escapeHtml(fallback);
+    }
+
+    function profileHandle(name) {
+      return String(name || "user")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "")
+        .slice(0, 12) || "user";
+    }
+
+    function readFileAsDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        if (!file) {
+          resolve("");
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ""));
+        reader.onerror = () => reject(new Error("Failed to read image file."));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function formatTime(timestamp) {
+      return new Intl.DateTimeFormat([], {
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      }).format(new Date(timestamp));
+    }
+
+    function normalizePresence(value) {
+      return ["online", "idle", "dnd", "invisible"].includes(value) ? value : "online";
+    }
+
+    function presenceLabel(value) {
+      const map = {
+        online: "Online",
+        idle: "Idle",
+        dnd: "Do Not Disturb",
+        invisible: "Invisible"
+      };
+      return map[normalizePresence(value)];
+    }
+
+    function nextPresence(value) {
+      const order = ["online", "idle", "dnd", "invisible"];
+      const current = order.indexOf(normalizePresence(value));
+      return order[(current + 1) % order.length];
+    }
+
+    function setMemberEditMode(modal, isOpen) {
+      const form = modal.querySelector("#memberForm");
+      const editRow = modal.querySelector("#memberModalEditRow");
+      form.classList.toggle("open", isOpen);
+      editRow.classList.toggle("active", isOpen);
+      editRow.querySelector(".sheet-action-label span:last-child").textContent = isOpen ? "Close Editor" : "Edit Profile";
+      editRow.querySelector(":scope > span:last-child").textContent = isOpen ? "×" : "›";
+    }
+
+    function activeServer() {
+      return state.servers.find((server) => server.id === state.activeServerId) || state.servers[0];
+    }
+
+    function activeProfile() {
+      return state.profile || defaultData.profile;
+    }
+
+    function getMemberRecord(name) {
+      const profile = activeProfile();
+      const profileName = profile.displayName || "You";
+      const isSelf = name === profileName || name === "You";
+      const stored = isSelf
+        ? (state.memberProfiles?.[profileName] || state.memberProfiles?.["You"] || {})
+        : (state.memberProfiles?.[name] || {});
+
+      if (isSelf) {
+        return {
+          name: profileName,
+          avatar: profile.avatar || stored.avatar || initials(profileName),
+          avatarImage: profile.avatarImage || stored.avatarImage || "",
+          status: profile.status || stored.status || "Local session",
+          presence: normalizePresence(profile.presence || stored.presence || "online"),
+          badges: [...(stored.badges || [])],
+          roles: [...(stored.roles || [])],
+          screenSharing: Boolean(stored.screenSharing),
+          banned: Boolean(stored.banned)
+        };
+      }
+
+      return {
+        name,
+        avatar: stored.avatar || initials(name),
+        avatarImage: stored.avatarImage || "",
+        status: stored.status || "Online",
+        presence: normalizePresence(stored.presence || "online"),
+        badges: [...(stored.badges || [])],
+        roles: [...(stored.roles || [])],
+        screenSharing: Boolean(stored.screenSharing),
+        banned: Boolean(stored.banned)
+      };
+    }
+
+    function saveMemberRecord(originalName, updates) {
+      const profile = activeProfile();
+      const currentName = profile.displayName || "You";
+      const targetName = originalName === "You" ? currentName : originalName;
+      const existing = getMemberRecord(targetName);
+      const nextName = (updates.name || targetName).trim();
+
+      if (!nextName) {
+        throw new Error("Display name is required.");
+      }
+
+      const merged = {
+        ...existing,
+        ...updates,
+        name: nextName,
+        avatar: (updates.avatar || existing.avatar || initials(nextName)).toUpperCase().slice(0, 2),
+        avatarImage: updates.avatarImage ?? existing.avatarImage ?? "",
+        presence: normalizePresence(updates.presence ?? existing.presence ?? "online"),
+        badges: updates.badges || existing.badges || [],
+        roles: updates.roles || existing.roles || [],
+        screenSharing: updates.screenSharing ?? existing.screenSharing ?? false,
+        banned: updates.banned ?? existing.banned ?? false
+      };
+
+      if (!state.memberProfiles) {
+        state.memberProfiles = {};
+      }
+
+      if (targetName !== nextName) {
+        delete state.memberProfiles[targetName];
+      }
+
+      state.memberProfiles[nextName] = {
+        badges: merged.badges,
+        roles: merged.roles,
+        status: merged.status,
+        avatar: merged.avatar,
+        avatarImage: merged.avatarImage,
+        presence: merged.presence,
+        screenSharing: merged.screenSharing,
+        banned: merged.banned
+      };
+
+      state.servers.forEach((server) => {
+        server.members = (server.members || []).map((member) => {
+          if (member === targetName || (targetName === currentName && member === "You")) {
+            return nextName;
+          }
+          return member;
+        });
+
+        server.channels.forEach((channel) => {
+          channel.messages = (channel.messages || []).map((message) => {
+            if (message.author === targetName || (targetName === currentName && message.author === currentName)) {
+              return { ...message, author: nextName };
+            }
+            return message;
+          });
+        });
+      });
+
+      if (targetName === currentName || originalName === "You") {
+        state.profile = {
+          displayName: nextName,
+          status: merged.status,
+          presence: merged.presence,
+          avatar: merged.avatar,
+          avatarImage: merged.avatarImage
+        };
+      }
+
+      saveState();
+      return nextName;
+    }
+
+    function activeChannel() {
+      const server = activeServer();
+      const preferred = server?.channels.find((channel) => channel.id === state.activeChannelId && channel.type === "text");
+      return preferred || server?.channels.find((channel) => channel.type === "text") || null;
+    }
+
+    function activeVoiceChannel() {
+      const server = activeServer();
+      if (!server || state.voiceState?.serverId !== server.id) {
+        return null;
+      }
+
+      return server.channels.find((channel) => channel.id === state.voiceState.channelId && channel.type === "voice") || null;
+    }
+
+    function voiceMembers(channel) {
+      if (!channel || channel.type !== "voice") {
+        return [];
+      }
+
+      return Array.from(new Set([activeProfile().displayName, ...(channel.members || [])]));
+    }
+
+    function voiceChannelForMember(name) {
+      return state.servers
+        .flatMap((server) => server.channels || [])
+        .find((channel) => channel.type === "voice" && (channel.members || []).includes(name)) || null;
+    }
+
+    function ensureSelection() {
+      const server = activeServer();
+      if (!server) {
+        return;
+      }
+
+      state.activeServerId = server.id;
+
+      if (!server.channels.some((channel) => channel.id === state.activeChannelId)) {
+        state.activeChannelId = server.channels[0]?.id || null;
+      }
+    }
+
+    function renderServers() {
+      serverStack.innerHTML = state.servers.map((server) => `
+        <button
+          class="server-button ${server.id === state.activeServerId ? "active" : ""}"
+          data-server-id="${server.id}"
+          title="${escapeHtml(server.name)}"
+        >${escapeHtml(initials(server.name))}</button>
+      `).join("");
+
+      serverStack.querySelectorAll("[data-server-id]").forEach((button) => {
+        button.addEventListener("click", () => {
+          state.activeServerId = button.getAttribute("data-server-id");
+          ensureSelection();
+          saveState();
+          render();
+        });
+      });
+    }
+
+    function renderChannels() {
+      const server = activeServer();
+      serverName.textContent = server?.name || "No server";
+      if (!server) {
+        channelList.innerHTML = '<div class="empty-state">No servers yet.</div>';
+        return;
+      }
+
+      const textChannels = server.channels.filter((channel) => channel.type === "text");
+      const voiceChannels = server.channels.filter((channel) => channel.type === "voice");
+
+      channelList.innerHTML = `
+        <section class="channel-group">
+          <div class="channel-group-title">Text Channels</div>
+          ${textChannels.map((channel) => `
+            <button
+              class="channel-button ${channel.id === state.activeChannelId ? "active" : ""}"
+              data-channel-id="${channel.id}"
+            >
+              <span>#</span>
+              <span>${escapeHtml(channel.name)}</span>
+            </button>
+          `).join("")}
+        </section>
+        <section class="channel-group">
+          <div class="channel-group-title">Voice Channels</div>
+          ${voiceChannels.length ? voiceChannels.map((channel) => `
+            <button
+              class="channel-button voice ${state.voiceState?.channelId === channel.id && state.voiceState?.serverId === server.id ? "active" : ""}"
+              data-voice-channel-id="${channel.id}"
+            >
+              <span class="channel-main">
+                <span>🔊</span>
+                <span>${escapeHtml(channel.name)}</span>
+              </span>
+              <span class="channel-occupancy">${voiceMembers(channel).length}</span>
+            </button>
+          `).join("") : '<div class="empty-state">No voice channels yet.</div>'}
+        </section>
+      `;
+
+      channelList.querySelectorAll("[data-channel-id]").forEach((button) => {
+        button.addEventListener("click", () => {
+          state.activeChannelId = button.getAttribute("data-channel-id");
+          saveState();
+          render();
+        });
+      });
+
+      channelList.querySelectorAll("[data-voice-channel-id]").forEach((button) => {
+        button.addEventListener("click", () => {
+          joinVoiceChannel(button.getAttribute("data-voice-channel-id"));
+        });
+      });
+    }
+
+    function renderMessages() {
+      const channel = activeChannel();
+
+      if (!channel) {
+        channelName.textContent = "No channel";
+        channelTopic.textContent = "Add a server and a channel to get started.";
+        messages.innerHTML = '<div class="status-line">Nothing selected yet.</div>';
+        return;
+      }
+
+      channelName.textContent = channel.name;
+      channelTopic.textContent = channel.topic || "No topic set";
+      messageInput.placeholder = `Message # ${channel.name} | chat`;
+
+      const intro = `
+        <section class="welcome">
+          <div class="welcome-badge">#</div>
+          <h1>Welcome to #${escapeHtml(channel.name)}</h1>
+          <p>${escapeHtml(channel.topic || "Start the conversation.")}</p>
+        </section>
+      `;
+
+      if (!channel.messages.length) {
+        messages.innerHTML = intro + '<div class="empty-state">No messages yet in this channel.</div>';
+        return;
+      }
+
+      const visibleMessages = channel.messages.filter((message) => !getMemberRecord(message.author).banned);
+
+      if (!visibleMessages.length) {
+        messages.innerHTML = intro + '<div class="empty-state">No visible messages. Banned users are hidden from chat.</div>';
+        return;
+      }
+
+      messages.innerHTML = intro + visibleMessages.map((message) => `
+        <article class="message" data-message-id="${escapeHtml(message.id)}">
+          <div class="message-actions">
+            <button type="button" class="message-action delete" data-delete-message="${escapeHtml(message.id)}" title="Delete message">🗑</button>
+          </div>
+          <div class="avatar">${avatarMarkup(getMemberRecord(message.author))}</div>
+          <div>
+            <div class="message-header">
+              <span class="message-author" data-profile-name="${escapeHtml(message.author)}">${escapeHtml(message.author)}</span>
+              <span class="message-time">${escapeHtml(formatTime(message.createdAt))}</span>
+            </div>
+            <div class="message-content">${escapeHtml(message.content || "")}</div>
+            ${message.gifUrl ? `<img class="message-gif" src="${escapeHtml(message.gifUrl)}" alt="${escapeHtml(message.gifLabel || "GIF")}">` : ""}
+          </div>
+        </article>
+      `).join("");
+
+      messages.querySelectorAll("[data-profile-name]").forEach((node) => {
+        node.addEventListener("click", () => openMemberModal(node.getAttribute("data-profile-name")));
+      });
+
+      messages.querySelectorAll("[data-delete-message]").forEach((button) => {
+        button.addEventListener("click", () => deleteMessage(button.getAttribute("data-delete-message")));
+      });
+
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    function deleteMessage(messageId) {
+      const channel = activeChannel();
+      if (!channel) {
+        return;
+      }
+
+      const index = channel.messages.findIndex((message) => message.id === messageId);
+      if (index === -1) {
+        return;
+      }
+
+      channel.messages.splice(index, 1);
+      saveState();
+      renderMessages();
+    }
+
+    function renderMembers() {
+      const server = activeServer();
+      const members = server?.members || [];
+      const profile = activeProfile();
+      const allMemberNames = Array.from(new Set([profile.displayName, ...members.filter((member) => member !== "You")]));
+      const memberNames = allMemberNames.filter((member) => {
+        const record = getMemberRecord(member);
+        return !record.banned && (record.presence !== "invisible" || member === profile.displayName);
+      });
+      const bannedNames = allMemberNames.filter((member) => getMemberRecord(member).banned);
+
+      const activeMarkup = memberNames.map((member) => {
+        const record = getMemberRecord(member);
+        const badges = record.badges.map((badge) => `<span class="pill badge">${escapeHtml(badge)}</span>`).join("");
+        const roles = record.roles.map((role) => `<span class="pill role">${escapeHtml(role)}</span>`).join("");
+
+        return `
+        <div class="member-row" data-member-name="${escapeHtml(record.name)}">
+          <div class="avatar">${avatarMarkup(record)}</div>
+          <div class="member-meta">
+            <span class="member-name">${escapeHtml(record.name)}</span>
+            <div class="pill-row">${badges}${roles}</div>
+          </div>
+          <span class="status-dot ${escapeHtml(record.presence)}"></span>
+        </div>
+      `;
+      }).join("");
+
+      const bannedMarkup = bannedNames.length ? `
+        <div class="channel-group-title" style="margin-top: 12px;">Banned</div>
+        ${bannedNames.map((member) => {
+          const record = getMemberRecord(member);
+          const roles = record.roles.map((role) => `<span class="pill role">${escapeHtml(role)}</span>`).join("");
+
+          return `
+            <div class="member-row" data-member-name="${escapeHtml(record.name)}">
+              <div class="avatar">${avatarMarkup(record)}</div>
+              <div class="member-meta">
+                <span class="member-name">${escapeHtml(record.name)}</span>
+                <div class="pill-row"><span class="pill banned">Banned</span>${roles}</div>
+              </div>
+            </div>
+          `;
+        }).join("")}
+      ` : "";
+
+      membersList.innerHTML = activeMarkup + bannedMarkup;
+
+      membersList.querySelectorAll("[data-member-name]").forEach((node) => {
+        node.addEventListener("click", () => openMemberModal(node.getAttribute("data-member-name")));
+      });
+    }
+
+    function renderProfile() {
+      const profile = getMemberRecord(activeProfile().displayName);
+      const badges = profile.badges.map((badge) => `<span class="pill badge">${escapeHtml(badge)}</span>`).join("");
+      const banned = profile.banned ? '<span class="pill banned">Banned</span>' : "";
+      userPanel.innerHTML = `
+        <div class="avatar">${avatarMarkup(profile)}</div>
+        <div class="identity">
+          <strong>${escapeHtml(profile.name)}</strong>
+          <span>${escapeHtml(presenceLabel(profile.presence))}${profile.status ? ` • ${escapeHtml(profile.status)}` : ""}</span>
+          <div class="pill-row">${badges}${banned}</div>
+        </div>
+      `;
+    }
+
+    function renderVoicePanel() {
+      const channel = activeVoiceChannel();
+      if (!channel) {
+        voicePanel.classList.remove("active");
+        return;
+      }
+
+      voicePanel.classList.add("active");
+      voicePanelChannel.textContent = channel.name;
+      const members = voiceMembers(channel);
+      voicePanelMembers.textContent = `${members.length} member${members.length === 1 ? "" : "s"} in voice`;
+      const sharing = getMemberRecord(activeProfile().displayName).screenSharing;
+      voicePanel.querySelector(".voice-actions")?.remove();
+      const actions = document.createElement("div");
+      actions.className = "voice-actions";
+      actions.innerHTML = `
+        <button type="button" class="action-button ${sharing ? "secondary" : "primary"}" id="toggleShareButton">
+          ${sharing ? "Stop Share" : "Share Screen"}
+        </button>
+      `;
+      voicePanel.appendChild(actions);
+      actions.querySelector("#toggleShareButton").addEventListener("click", toggleScreenShare);
+    }
+
+    function render() {
+      ensureSelection();
+      document.title = `${activeServer()?.name || "Discord Style Workspace"} - Discord Style Workspace`;
+      renderServers();
+      renderChannels();
+      renderMessages();
+      renderMembers();
+      renderProfile();
+      renderVoicePanel();
+    }
+
+    function joinVoiceChannel(channelId) {
+      const server = activeServer();
+      if (!server) {
+        return;
+      }
+
+      const nextChannel = server.channels.find((channel) => channel.id === channelId && channel.type === "voice");
+      if (!nextChannel) {
+        return;
+      }
+
+      const currentServer = state.servers.find((item) => item.id === state.voiceState?.serverId);
+      const currentChannel = currentServer?.channels.find((channel) => channel.id === state.voiceState?.channelId && channel.type === "voice");
+      const selfName = activeProfile().displayName;
+
+      if (currentChannel) {
+        currentChannel.members = (currentChannel.members || []).filter((member) => member !== selfName);
+      }
+
+      nextChannel.members = Array.from(new Set([...(nextChannel.members || []).filter((member) => member !== selfName), selfName]));
+      state.voiceState = {
+        serverId: server.id,
+        channelId: nextChannel.id
+      };
+
+      saveState();
+      render();
+    }
+
+    function leaveVoiceChannel() {
+      const currentServer = state.servers.find((item) => item.id === state.voiceState?.serverId);
+      const currentChannel = currentServer?.channels.find((channel) => channel.id === state.voiceState?.channelId && channel.type === "voice");
+      const selfName = activeProfile().displayName;
+
+      if (currentChannel) {
+        currentChannel.members = (currentChannel.members || []).filter((member) => member !== selfName);
+      }
+
+      state.voiceState = {
+        serverId: null,
+        channelId: null
+      };
+      saveMemberRecord(activeProfile().displayName, {
+        screenSharing: false
+      });
+
+      saveState();
+      render();
+    }
+
+    function toggleScreenShare() {
+      const activeVoice = activeVoiceChannel();
+      if (!activeVoice) {
+        return;
+      }
+
+      const self = getMemberRecord(activeProfile().displayName);
+      saveMemberRecord(self.name, {
+        screenSharing: !self.screenSharing
+      });
+      render();
+    }
+
+    function closePickers() {
+      emojiPicker.classList.remove("open");
+      gifPicker.classList.remove("open");
+    }
+
+    function toggleServerHeaderMenu() {
+      serverHeaderMenu.classList.toggle("open");
+    }
+
+    function closeServerHeaderMenu() {
+      serverHeaderMenu.classList.remove("open");
+    }
+
+    async function copyActiveServerInvite(buttonId) {
+      const code = activeServer()?.inviteCode;
+      if (!code) {
+        return;
+      }
+
+      const button = document.getElementById(buttonId);
+
+      try {
+        await navigator.clipboard.writeText(code);
+        if (button) {
+          const original = button.textContent;
+          button.textContent = "Copied Invite Code";
+          setTimeout(() => {
+            button.textContent = original;
+          }, 1200);
+        }
+      } catch {
+        if (button) {
+          const original = button.textContent;
+          button.textContent = code;
+          setTimeout(() => {
+            button.textContent = original;
+          }, 1500);
+        }
+      }
+    }
+
+    function togglePicker(which) {
+      if (which === "emoji") {
+        const willOpen = !emojiPicker.classList.contains("open");
+        closePickers();
+        if (willOpen) {
+          emojiPicker.classList.add("open");
+        }
+        return;
+      }
+
+      const willOpen = !gifPicker.classList.contains("open");
+      closePickers();
+      if (willOpen) {
+        gifPicker.classList.add("open");
+      }
+    }
+
+    function insertEmoji(emoji) {
+      messageInput.value += emoji;
+      messageInput.focus();
+      messageInput.dispatchEvent(new Event("input"));
+    }
+
+    function sendGif(gif) {
+      const channel = activeChannel();
+      if (!channel) {
+        return;
+      }
+
+      channel.messages.push({
+        id: makeId("message"),
+        author: activeProfile().displayName,
+        content: `[GIF] ${gif.label}`,
+        gifUrl: gif.url,
+        gifLabel: gif.label,
+        createdAt: Date.now(),
+      });
+
+      saveState();
+      closePickers();
+      renderMessages();
+    }
+
+    function renderPickers() {
+      emojiGrid.innerHTML = EMOJIS.map((emoji) => `
+        <button type="button" class="emoji-option" data-emoji="${emoji}">${emoji}</button>
+      `).join("");
+
+      gifGrid.innerHTML = GIFS.map((gif, index) => `
+        <button type="button" class="gif-option" data-gif-index="${index}">
+          <img src="${gif.url}" alt="${escapeHtml(gif.label)}">
+          <span>${escapeHtml(gif.label)}</span>
+        </button>
+      `).join("");
+
+      emojiGrid.querySelectorAll("[data-emoji]").forEach((button) => {
+        button.addEventListener("click", () => insertEmoji(button.getAttribute("data-emoji")));
+      });
+
+      gifGrid.querySelectorAll("[data-gif-index]").forEach((button) => {
+        button.addEventListener("click", () => sendGif(GIFS[Number(button.getAttribute("data-gif-index"))]));
+      });
+    }
+
+    function openModal(mode) {
+      serverMenu.classList.remove("open");
+      modalMode = mode;
+      modalError.textContent = "";
+      serverInput.value = "";
+      serverCodeInput.value = "";
+
+      if (mode === "create") {
+        modalTitle.textContent = "Create Server";
+        modalDescription.textContent = "Make a new local server with starter channels and an invite code.";
+        confirmModal.textContent = "Create";
+        serverCodeField.style.display = "none";
+      } else {
+        modalTitle.textContent = "Add Server";
+        modalDescription.textContent = "Join a locally shared server by using its invite code.";
+        confirmModal.textContent = "Add";
+        serverCodeField.style.display = "block";
+      }
+
+      modalBackdrop.classList.add("open");
+      serverInput.focus();
+    }
+
+    function closeModal() {
+      modalBackdrop.classList.remove("open");
+    }
+
+    function toggleServerMenu() {
+      serverMenu.classList.toggle("open");
+    }
+
+    function ensureProfileModal() {
+      if (profileModal) {
+        return profileModal;
+      }
+
+      const wrapper = document.createElement("div");
+      wrapper.className = "modal-backdrop";
+      wrapper.id = "profileModalBackdrop";
+      wrapper.innerHTML = `
+        <div class="modal">
+          <h2>Customize Profile</h2>
+          <p>Update your local display name, status line, and avatar initials.</p>
+          <form id="profileForm">
+            <div class="field">
+              <label for="profileNameInput">Display Name</label>
+              <input id="profileNameInput" maxlength="32" placeholder="You">
+            </div>
+            <div class="field">
+              <label for="profilePresenceInput">Presence</label>
+              <select id="profilePresenceInput">
+                <option value="online">Online</option>
+                <option value="idle">Idle</option>
+                <option value="dnd">Do Not Disturb</option>
+                <option value="invisible">Invisible</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="profileStatusInput">Custom Status</label>
+              <input id="profileStatusInput" maxlength="60" placeholder="Local session">
+            </div>
+            <div class="field">
+              <label for="profileAvatarInput">Avatar Initials</label>
+              <input id="profileAvatarInput" maxlength="2" placeholder="YU">
+              <small>Use one or two letters for the round avatar badge.</small>
+            </div>
+            <div class="field">
+              <label for="profileAvatarFile">Profile Picture</label>
+              <input id="profileAvatarFile" type="file" accept="image/*">
+              <small>Upload an image to use as your avatar. Stored locally in this browser.</small>
+            </div>
+            <div class="error" id="profileError"></div>
+            <div class="modal-actions">
+              <button type="button" class="action-button secondary" id="cancelProfileModal">Cancel</button>
+              <button type="submit" class="action-button primary">Save Profile</button>
+            </div>
+          </form>
+        </div>
+      `;
+
+      document.body.appendChild(wrapper);
+
+      wrapper.addEventListener("click", (event) => {
+        if (event.target === wrapper) {
+          wrapper.classList.remove("open");
+        }
+      });
+
+      wrapper.querySelector("#cancelProfileModal").addEventListener("click", () => {
+        wrapper.classList.remove("open");
+      });
+
+      wrapper.querySelector("#profileForm").addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const nameInput = wrapper.querySelector("#profileNameInput");
+        const presenceInput = wrapper.querySelector("#profilePresenceInput");
+        const statusInput = wrapper.querySelector("#profileStatusInput");
+        const avatarInput = wrapper.querySelector("#profileAvatarInput");
+        const avatarFileInput = wrapper.querySelector("#profileAvatarFile");
+        const errorNode = wrapper.querySelector("#profileError");
+        const displayName = nameInput.value.trim();
+        const status = statusInput.value.trim();
+        const avatar = avatarInput.value.trim().toUpperCase();
+
+        errorNode.textContent = "";
+
+        if (!displayName) {
+          errorNode.textContent = "Display name is required.";
+          return;
+        }
+
+        try {
+          const avatarImage = avatarFileInput.files?.[0]
+            ? await readFileAsDataUrl(avatarFileInput.files[0])
+            : (state.profile.avatarImage || "");
+
+          state.profile = {
+            displayName,
+            status: status || "Local session",
+            presence: normalizePresence(presenceInput.value),
+            avatar: avatar || initials(displayName),
+            avatarImage
+          };
+
+          if (!state.memberProfiles) {
+            state.memberProfiles = {};
+          }
+
+          state.memberProfiles[displayName] = {
+            ...(state.memberProfiles[displayName] || state.memberProfiles["You"] || {}),
+            avatar: state.profile.avatar,
+            avatarImage: state.profile.avatarImage,
+            status: state.profile.status,
+            presence: state.profile.presence
+          };
+
+          saveState();
+          render();
+          wrapper.classList.remove("open");
+        } catch (error) {
+          errorNode.textContent = error.message;
+        }
+      });
+
+      profileModal = wrapper;
+      return wrapper;
+    }
+
+    function openProfileModal() {
+      const modal = ensureProfileModal();
+      const profile = activeProfile();
+
+      modal.querySelector("#profileNameInput").value = profile.displayName || "";
+      modal.querySelector("#profilePresenceInput").value = normalizePresence(profile.presence || "online");
+      modal.querySelector("#profileStatusInput").value = profile.status || "";
+      modal.querySelector("#profileAvatarInput").value = (profile.avatar || initials(profile.displayName)).slice(0, 2).toUpperCase();
+      modal.querySelector("#profileAvatarFile").value = "";
+      modal.querySelector("#profileError").textContent = "";
+      modal.classList.add("open");
+      modal.querySelector("#profileNameInput").focus();
+    }
+
+    function ensureMemberModal() {
+      if (memberModal) {
+        return memberModal;
+      }
+
+      const wrapper = document.createElement("div");
+      wrapper.className = "modal-backdrop";
+      wrapper.id = "memberModalBackdrop";
+      wrapper.innerHTML = `
+        <div class="modal member-sheet">
+          <div class="profile-sheet">
+            <div class="sheet-banner">
+              <div class="sheet-bubble" id="memberModalBubble">What have you been reading?</div>
+            </div>
+            <div class="sheet-head">
+              <div class="sheet-avatar-wrap">
+                <div class="avatar" id="memberModalAvatar">??</div>
+              </div>
+              <h2 class="sheet-title" id="memberModalName">member</h2>
+              <div class="sheet-handle" id="memberModalHandle">user123</div>
+              <div class="sheet-badges" id="memberModalBadgeIcons"></div>
+              <div class="sheet-bio" id="memberModalStatus">Online</div>
+
+              <div class="sheet-card">
+                <div class="sheet-card-header">
+                  <span>Game Collection</span>
+                </div>
+                <div class="sheet-card-body">
+                  <div class="game-icons" id="memberModalGames"></div>
+                </div>
+              </div>
+
+              <div class="sheet-card">
+                <div id="memberModalStreamCard">
+                  <div class="sheet-card-header">
+                    <span>Streaming <span class="live-pill">LIVE</span></span>
+                    <span>···</span>
+                  </div>
+                  <div class="sheet-card-body">
+                    <div class="stream-preview">
+                      <div class="stream-screen"></div>
+                      <div class="stream-footer">
+                        <div class="stream-meta">
+                          <span>⚡</span>
+                          <span>🔊</span>
+                          <span id="memberModalVoice">VC 1</span>
+                        </div>
+                        <div class="pill-row" id="memberModalPills"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="sheet-action-card">
+                <div class="sheet-action-row" id="memberModalEditRow">
+                  <div class="sheet-action-label"><span>✏</span><span>Edit Profile</span></div>
+                  <span>›</span>
+                </div>
+                <div class="sheet-action-row" id="memberModalPresenceRow">
+                  <div class="sheet-action-label"><span>⛔</span><span id="memberModalPresence">Do Not Disturb</span></div>
+                  <span>✎</span>
+                </div>
+              </div>
+
+              <div class="sheet-action-card">
+                <div class="sheet-action-row" id="memberModalSwitchRow">
+                  <div class="sheet-action-label"><span>◉</span><span>Switch Accounts</span></div>
+                  <span>›</span>
+                </div>
+                <div class="sheet-action-row" id="memberModalCopyIdRow">
+                  <div class="sheet-action-label"><span>ID</span><span id="memberModalId">Copy User ID</span></div>
+                  <span>›</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <form id="memberForm" class="sheet-form">
+            <div class="sheet-form-title">Profile Controls</div>
+            <div class="field">
+              <label for="memberNameInput">Display Name</label>
+              <input id="memberNameInput" maxlength="32" placeholder="Display name">
+            </div>
+            <div class="field">
+              <label for="memberPresenceInput">Presence</label>
+              <select id="memberPresenceInput">
+                <option value="online">Online</option>
+                <option value="idle">Idle</option>
+                <option value="dnd">Do Not Disturb</option>
+                <option value="invisible">Invisible</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="memberStatusInput">Custom Status</label>
+              <input id="memberStatusInput" maxlength="60" placeholder="Status text">
+            </div>
+            <div class="field">
+              <label for="memberAvatarInput">Avatar Initials</label>
+              <input id="memberAvatarInput" maxlength="2" placeholder="AB">
+            </div>
+            <div class="field">
+              <label for="memberAvatarFile">Profile Picture</label>
+              <input id="memberAvatarFile" type="file" accept="image/*">
+              <small>Upload an image avatar for this local member profile.</small>
+            </div>
+            <div class="field">
+              <label for="memberBadgesInput">Badges</label>
+              <input id="memberBadgesInput" placeholder="Founder, Nitro, Bug Hunter">
+              <small>Separate badges with commas.</small>
+            </div>
+            <div class="field">
+              <label for="memberRolesInput">Roles</label>
+              <input id="memberRolesInput" placeholder="Admin, Moderator, Artist">
+              <small>Separate roles with commas.</small>
+            </div>
+            <div class="error" id="memberError"></div>
+            <div class="modal-actions">
+              <button type="button" class="action-button danger" id="toggleBanButton">Ban User</button>
+              <button type="button" class="action-button secondary" id="cancelMemberModal">Close</button>
+              <button type="submit" class="action-button primary">Save Member</button>
+            </div>
+          </form>
+        </div>
+      `;
+
+      document.body.appendChild(wrapper);
+
+      wrapper.addEventListener("click", (event) => {
+        if (event.target === wrapper) {
+          wrapper.classList.remove("open");
+        }
+      });
+
+      wrapper.querySelector("#cancelMemberModal").addEventListener("click", () => {
+        wrapper.classList.remove("open");
+      });
+
+      wrapper.querySelector("#memberModalEditRow").addEventListener("click", () => {
+        const willOpen = !wrapper.querySelector("#memberForm").classList.contains("open");
+        setMemberEditMode(wrapper, willOpen);
+        if (willOpen) {
+          wrapper.querySelector("#memberNameInput").focus();
+        }
+      });
+
+      wrapper.querySelector("#memberModalPresenceRow").addEventListener("click", () => {
+        const record = getMemberRecord(selectedMemberName);
+        if (record.banned) {
+          return;
+        }
+
+        const updatedName = saveMemberRecord(selectedMemberName, {
+          presence: nextPresence(record.presence)
+        });
+
+        selectedMemberName = updatedName;
+        render();
+        openMemberModal(updatedName);
+      });
+
+      wrapper.querySelector("#memberModalCopyIdRow").addEventListener("click", async () => {
+        const record = getMemberRecord(selectedMemberName);
+        const tag = `${profileHandle(record.name)}lx`;
+        const target = `user:${tag}`;
+
+        try {
+          await navigator.clipboard.writeText(target);
+          wrapper.querySelector("#memberModalId").textContent = `Copied User ID (${tag})`;
+          setTimeout(() => {
+            wrapper.querySelector("#memberModalId").textContent = `Copy User ID (${tag})`;
+          }, 1200);
+        } catch {
+          wrapper.querySelector("#memberModalId").textContent = target;
+          setTimeout(() => {
+            wrapper.querySelector("#memberModalId").textContent = `Copy User ID (${tag})`;
+          }, 1500);
+        }
+      });
+
+      wrapper.querySelector("#memberModalSwitchRow").addEventListener("click", () => {
+        const record = getMemberRecord(selectedMemberName);
+        const errorNode = wrapper.querySelector("#memberError");
+        errorNode.textContent = `Switched focus to ${record.name}.`;
+        wrapper.querySelector("#memberNameInput").focus();
+      });
+
+      wrapper.querySelector("#toggleBanButton").addEventListener("click", () => {
+        const record = getMemberRecord(selectedMemberName);
+        const selfName = activeProfile().displayName;
+        const errorNode = wrapper.querySelector("#memberError");
+        errorNode.textContent = "";
+
+        if (record.name === selfName) {
+          errorNode.textContent = "You cannot ban your own profile.";
+          return;
+        }
+
+        const nextName = saveMemberRecord(selectedMemberName, {
+          banned: !record.banned
+        });
+
+        selectedMemberName = nextName;
+        render();
+        openMemberModal(nextName);
+      });
+
+      wrapper.querySelector("#memberForm").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const errorNode = wrapper.querySelector("#memberError");
+        errorNode.textContent = "";
+
+        try {
+          const avatarFileInput = wrapper.querySelector("#memberAvatarFile");
+          const avatarImage = avatarFileInput.files?.[0]
+            ? await readFileAsDataUrl(avatarFileInput.files[0])
+            : getMemberRecord(selectedMemberName).avatarImage;
+
+          const nextName = saveMemberRecord(selectedMemberName, {
+            name: wrapper.querySelector("#memberNameInput").value.trim(),
+            status: wrapper.querySelector("#memberStatusInput").value.trim() || "Online",
+            presence: normalizePresence(wrapper.querySelector("#memberPresenceInput").value),
+            avatar: wrapper.querySelector("#memberAvatarInput").value.trim().toUpperCase(),
+            avatarImage,
+            badges: wrapper.querySelector("#memberBadgesInput").value.split(",").map((item) => item.trim()).filter(Boolean),
+            roles: wrapper.querySelector("#memberRolesInput").value.split(",").map((item) => item.trim()).filter(Boolean),
+            banned: getMemberRecord(selectedMemberName).banned
+          });
+
+          selectedMemberName = nextName;
+          render();
+          openMemberModal(nextName);
+          setMemberEditMode(wrapper, false);
+        } catch (error) {
+          errorNode.textContent = error.message;
+        }
+      });
+
+      memberModal = wrapper;
+      return wrapper;
+    }
+
+    function openMemberModal(name) {
+      selectedMemberName = name;
+      const modal = ensureMemberModal();
+      const record = getMemberRecord(name);
+      const isSelf = record.name === activeProfile().displayName;
+      const iconPool = ["🎙", "🛡", "🌀", "🔺", "⚙"];
+      const badgeIcons = [
+        ...record.badges.map((badge, index) => `<span class="sheet-badge-icon" title="${escapeHtml(badge)}">${iconPool[index % iconPool.length]}</span>`),
+        ...record.roles.slice(0, 3).map((role, index) => `<span class="sheet-badge-icon" title="${escapeHtml(role)}">${iconPool[(index + 2) % iconPool.length]}</span>`)
+      ].join("");
+      const gameIcons = ["MC", "RL", "R6", "RB"].map((game) => `<div class="game-icon">${game}</div>`).join("");
+      const tag = `${profileHandle(record.name)}lx`;
+      const voiceChannel = voiceChannelForMember(record.name);
+      const streamCard = modal.querySelector("#memberModalStreamCard");
+
+      modal.querySelector("#memberModalAvatar").innerHTML = avatarMarkup(record);
+      modal.querySelector("#memberModalName").textContent = record.name.toLowerCase();
+      modal.querySelector("#memberModalHandle").textContent = tag;
+      modal.querySelector("#memberModalBadgeIcons").innerHTML = badgeIcons;
+      modal.querySelector("#memberModalBubble").textContent = record.banned ? "This user is banned." : "What have you been reading?";
+      modal.querySelector("#memberModalStatus").textContent = record.status;
+      modal.querySelector("#memberModalPresence").textContent = record.banned ? "Banned" : presenceLabel(record.presence);
+      modal.querySelector("#memberModalId").textContent = `Copy User ID (${tag})`;
+      modal.querySelector("#memberModalGames").innerHTML = gameIcons;
+      modal.querySelector("#memberModalVoice").textContent = voiceChannel ? voiceChannel.name : "Not in voice";
+      modal.querySelector("#memberModalPills").innerHTML = [
+        ...record.badges.map((badge) => `<span class="pill badge">${escapeHtml(badge)}</span>`),
+        ...record.roles.map((role) => `<span class="pill role">${escapeHtml(role)}</span>`),
+        ...(record.banned ? ['<span class="pill banned">Banned</span>'] : [])
+      ].join("");
+      streamCard.style.display = record.screenSharing && voiceChannel ? "" : "none";
+
+      modal.querySelector("#memberNameInput").value = record.name;
+      modal.querySelector("#memberPresenceInput").value = normalizePresence(record.presence || "online");
+      modal.querySelector("#memberStatusInput").value = record.status;
+      modal.querySelector("#memberAvatarInput").value = (record.avatar || initials(record.name)).slice(0, 2).toUpperCase();
+      modal.querySelector("#memberAvatarFile").value = "";
+      modal.querySelector("#memberBadgesInput").value = record.badges.join(", ");
+      modal.querySelector("#memberRolesInput").value = record.roles.join(", ");
+      modal.querySelector("#memberError").textContent = "";
+      modal.querySelector("#toggleBanButton").textContent = record.banned ? "Unban User" : "Ban User";
+      modal.querySelector("#toggleBanButton").disabled = record.name === activeProfile().displayName;
+      modal.querySelector("#memberModalEditRow .sheet-action-label span:last-child").textContent = isSelf ? "Edit Profile" : "Edit Member";
+      setMemberEditMode(modal, false);
+      modal.classList.add("open");
+    }
+
+    function createServer(name) {
+      const cleanName = name.trim();
+      const server = {
+        id: makeId("server"),
+        name: cleanName,
+        inviteCode: cleanName.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8) || makeId("INV").slice(-6).toUpperCase(),
+        members: ["You", "Atlas", "Mira"],
+        channels: [
+          {
+            id: makeId("channel"),
+            name: "general",
+            type: "text",
+            topic: `Welcome to ${cleanName}.`,
+            messages: [
+              {
+                id: makeId("message"),
+                author: "System",
+                content: `Server created. Share code ${cleanName.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8) || "INVITE"} to add it elsewhere in this browser.`,
+                createdAt: Date.now(),
+              }
+            ]
+          },
+          {
+            id: makeId("channel"),
+            name: "introductions",
+            type: "text",
+            topic: "Meet the crew.",
+            messages: []
+          },
+          {
+            id: makeId("channel"),
+            name: "General Voice",
+            type: "voice",
+            members: ["Atlas"]
+          }
+        ]
+      };
+
+      state.memberProfiles.Atlas = state.memberProfiles.Atlas || {
+        badges: [],
+        roles: ["Member"],
+        status: "Ready to chat",
+        presence: "online",
+        avatar: "AT",
+        avatarImage: "",
+        screenSharing: false,
+        banned: false
+      };
+
+      state.memberProfiles.Mira = state.memberProfiles.Mira || {
+        badges: [],
+        roles: ["Member"],
+        status: "In introductions",
+        presence: "idle",
+        avatar: "MI",
+        avatarImage: "",
+        screenSharing: false,
+        banned: false
+      };
+
+      state.servers.push(server);
+      state.activeServerId = server.id;
+      state.activeChannelId = server.channels[0].id;
+      saveState();
+      render();
+      closeModal();
+    }
+
+    function addServer(name, code) {
+      const invite = code.trim().toUpperCase();
+      if (!invite) {
+        throw new Error("Invite code is required.");
+      }
+
+      const source = state.servers.find((server) => server.inviteCode === invite);
+      if (!source) {
+        throw new Error("Invite code not found in this local workspace.");
+      }
+
+      const duplicate = state.servers.find((server) => server.id !== source.id && server.name === name.trim() && server.inviteCode === invite);
+      if (duplicate) {
+        throw new Error("That server has already been added.");
+      }
+
+      const clone = JSON.parse(JSON.stringify(source));
+      clone.id = makeId("server");
+      clone.name = name.trim() || source.name;
+      clone.channels = clone.channels.map((channel) => ({
+        ...channel,
+        id: makeId("channel"),
+        messages: (channel.messages || []).map((message) => ({
+          ...message,
+          id: makeId("message"),
+        })),
+        members: [...(channel.members || [])],
+      }));
+
+      state.servers.push(clone);
+      state.activeServerId = clone.id;
+      state.activeChannelId = clone.channels[0]?.id || null;
+      saveState();
+      render();
+      closeModal();
+    }
+
+    document.getElementById("openCreateServer").addEventListener("click", toggleServerMenu);
+    serverTitleButton.addEventListener("click", toggleServerHeaderMenu);
+    document.getElementById("attachButton").addEventListener("click", () => {
+      messageInput.focus();
+    });
+    document.getElementById("giftButton").addEventListener("click", () => {
+      messageInput.value += "[Gift] ";
+      messageInput.focus();
+      messageInput.dispatchEvent(new Event("input"));
+    });
+    document.getElementById("emojiButton").addEventListener("click", () => togglePicker("emoji"));
+    document.getElementById("gifButton").addEventListener("click", () => togglePicker("gif"));
+    document.getElementById("stickerButton").addEventListener("click", () => togglePicker("emoji"));
+    document.getElementById("appsButton").addEventListener("click", () => {
+      messageInput.focus();
+    });
+    document.getElementById("menuCreateServer").addEventListener("click", () => openModal("create"));
+    document.getElementById("menuAddServer").addEventListener("click", () => openModal("add"));
+    document.getElementById("invitePeopleButton").addEventListener("click", async () => {
+      await copyActiveServerInvite("invitePeopleButton");
+      closeServerHeaderMenu();
+    });
+    document.getElementById("copyInviteCodeHeaderButton").addEventListener("click", async () => {
+      await copyActiveServerInvite("copyInviteCodeHeaderButton");
+      closeServerHeaderMenu();
+    });
+    document.getElementById("addChannelButton").addEventListener("click", () => {
+      const server = activeServer();
+      if (!server) {
+        return;
+      }
+
+      const name = prompt("Channel name. Prefix with 'voice ' to create a voice channel.");
+      if (!name || !name.trim()) {
+        return;
+      }
+
+      const channel = {
+        id: makeId("channel"),
+        name: name.trim(),
+        type: name.trim().toLowerCase().startsWith("voice ") ? "voice" : "text",
+        topic: `Chat in ${name.trim()}.`,
+        messages: [],
+        members: [],
+      };
+
+      if (channel.type === "text") {
+        channel.name = name.trim().toLowerCase().replace(/\s+/g, "-");
+      }
+
+      server.channels.push(channel);
+      if (channel.type === "text") {
+        state.activeChannelId = channel.id;
+      }
+      saveState();
+      render();
+    });
+    userPanel.addEventListener("click", () => openMemberModal(activeProfile().displayName));
+    document.getElementById("leaveVoiceButton").addEventListener("click", leaveVoiceChannel);
+
+    document.getElementById("cancelModal").addEventListener("click", closeModal);
+    modalBackdrop.addEventListener("click", (event) => {
+      if (event.target === modalBackdrop) {
+        closeModal();
+      }
+    });
+
+    document.addEventListener("click", (event) => {
+      const createButton = document.getElementById("openCreateServer");
+      if (!serverMenu.contains(event.target) && event.target !== createButton) {
+        serverMenu.classList.remove("open");
+      }
+
+      if (!serverHeaderMenu.contains(event.target) && !serverTitleButton.contains(event.target)) {
+        closeServerHeaderMenu();
+      }
+
+      if (
+        !emojiPicker.contains(event.target) &&
+        !gifPicker.contains(event.target) &&
+        event.target !== document.getElementById("emojiButton") &&
+        event.target !== document.getElementById("gifButton")
+      ) {
+        closePickers();
+      }
+    });
+
+    modalForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      modalError.textContent = "";
+
+      try {
+        const name = serverInput.value.trim();
+        if (!name) {
+          throw new Error("Server name is required.");
+        }
+
+        if (modalMode === "create") {
+          createServer(name);
+          return;
+        }
+
+        addServer(name, serverCodeInput.value);
+      } catch (error) {
+        modalError.textContent = error.message;
+      }
+    });
+
+    composer.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const text = messageInput.value.trim();
+      const channel = activeChannel();
+
+      if (!text || !channel) {
+        return;
+      }
+
+      channel.messages.push({
+        id: makeId("message"),
+        author: activeProfile().displayName,
+        content: text,
+        createdAt: Date.now(),
+      });
+
+      messageInput.value = "";
+      messageInput.style.height = "auto";
+      saveState();
+      renderMessages();
+    });
+
+    messageInput.addEventListener("input", () => {
+      messageInput.style.height = "auto";
+      messageInput.style.height = `${Math.min(messageInput.scrollHeight, 180)}px`;
+    });
+
+    messageInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        composer.requestSubmit();
+      }
+    });
+
+    renderPickers();
+    render();
+  </script>
+</body>
+</html>
